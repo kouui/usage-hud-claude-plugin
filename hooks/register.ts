@@ -33,7 +33,12 @@ async function refreshBranch($: any, cwd: string): Promise<void> {
   }
 }
 
-export const register: Register = (on) => {
+// Set from the plugin's options when the module loads (`showCache`: off unless asked for).
+const show = { isCache: false }
+
+export const register: Register = (on, options) => {
+  show.isCache = options.showCache === true
+
   on('session.start', async ($, e, next) => {
     if (!git.isTicking) {
       git.isTicking = true
@@ -115,7 +120,7 @@ export const register: Register = (on) => {
 
       // Group 3: the prompt cache of the last response: uncached input, read, written, hit rate, output.
       const cache: Piece[] = []
-      if (ctx.breakdown?.apiUsage) {
+      if (show.isCache && ctx.breakdown?.apiUsage) {
         const c = cacheStats(ctx.breakdown.apiUsage)
         const hit = c.hit === undefined ? '--' : `${c.hit}%`
         const lead = `in ${tokenLabel(c.input)}  cr ${tokenLabel(c.read)}  cw ${tokenLabel(c.write)}  `
