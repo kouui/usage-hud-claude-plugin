@@ -1,6 +1,6 @@
 import type { Register } from 'claude-code'
 
-import { baseName, countdown, labelBar, levelColor, modelLabel, rowWidth, tokenLabel, windowLabel } from './format'
+import { baseName, cacheStats, countdown, labelBar, levelColor, modelLabel, rowWidth, tokenLabel, windowLabel } from './format'
 
 const REFRESH_MS = 60_000 // countdowns move without any event, so redraw once a minute
 const GIT_TTL_MS = 15_000
@@ -112,7 +112,28 @@ export const register: Register = (on) => {
         meters.push(sep(), meter(`window-${r.kind}`, windowLabel(r.kind), r.percentUsed, width, left ? `(${left})` : ''))
       }
       // Cost is not shown. To bring it back: if (usage.cost) meters.push(sep(), piece(`$${usage.cost.usd.toFixed(2)}`, { dimColor: true }))
-      return { head, meters }
+
+      // Group 3: the prompt cache of the last response: uncached input, read, written, hit rate, output.
+      const cache: Piece[] = []
+      if (ctx.breakdown?.apiUsage) {
+        const c = cacheStats(ctx.breakdown.apiUsage)
+        const hit = c.hit === undefined ? '--' : `${c.hit}%`
+        const lead = `in ${tokenLabel(c.input)}  cr ${tokenLabel(c.read)}  cw ${tokenLabel(c.write)}  `
+        const tail = `  out ${tokenLabel(c.output)}`
+        const hitColor = c.hit === undefined ? undefined : c.hit >= 80 ? 'green' : c.hit >= 50 ? 'yellow' : 'red'
+        const hitText = `hit ${hit}`
+        cache.push({
+          text: lead + hitText + tail,
+          props: {},
+          key: 'cache',
+          runs: [
+            { text: lead, props: { dimColor: true } },
+            { text: hitText, props: hitColor ? { color: hitColor } : { dimColor: true } },
+            { text: tail, props: { dimColor: true } },
+          ],
+        })
+      }
+      return { head, meters, cache }
     }
 
     // Full on one row if it fits, else compact on one row, else full on two rows.
@@ -120,9 +141,18 @@ export const register: Register = (on) => {
     const fits = (pieces: Piece[]) => rowWidth(pieces.map((p) => p.text), GAP) <= columns - SPARE
     const full = build(false)
     const compact = build(true)
-    const fullRow = [...full.head, sep(), ...full.meters]
-    const compactRow = [...compact.head, sep(), ...compact.meters]
-    const rows: Piece[][] = fits(fullRow) ? [fullRow] : fits(compactRow) ? [compactRow] : [full.head, full.meters]
+    // The cache group goes on the right: at the end of the row, or at the end of the meters row.
+    const withCache = (b: ReturnType<typeof build>, pieces: Piece[]) => (b.cache.length ? [...pieces, sep(), ...b.cache] : pieces)
+    const fullRow = withCache(full, [...full.head, sep(), ...full.meters])
+    const compactRow = withCache(compact, [...compact.head, sep(), ...compact.meters])
+    const twoRow = [full.head, withCache(full, full.meters)]
+    const rows: Piece[][] = fits(fullRow)
+      ? [fullRow]
+      : fits(compactRow)
+        ? [compactRow]
+        : fits(twoRow[1])
+          ? twoRow
+          : [full.head, full.meters, full.cache].filter((r) => r.length > 0)
 
     const drawPiece = (p: Piece) =>
       p.runs

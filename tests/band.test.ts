@@ -89,3 +89,44 @@ test('the context percent is measured against the compaction window and the bar 
   expect(await ui.find({ type: 'Text', text: /\(msg 48k\/400k\)/ })).toBeDefined()
   await ui.unmount()
 })
+
+test('the cache figures of the last response are drawn on the right', async ($, on) => {
+  mock.clock(on, { now: NOW })
+  on('session.model', () => ({ value: 'claude-sonnet-5-5' }))
+  on('session.cwd', () => ({ value: '/home/u/proj' }))
+  on('session.usage', () => ({
+    value: {
+      startedAt: 0,
+      context: {
+        tokens: 100000,
+        window: 1000000,
+        percent: 10,
+        breakdown: {
+          rawMaxTokens: 400000,
+          categories: [{ name: 'Messages', kind: 'used', tokens: 48000 }],
+          apiUsage: { input_tokens: 1000, output_tokens: 800, cache_read_input_tokens: 95000, cache_creation_input_tokens: 4000 },
+        },
+      },
+      rateLimits: [],
+    },
+  }))
+
+  for (const bodyColumns of [60, 140, 300]) {
+    const ui = await $.ui.mount({ plugin: 'usage-hud', surface: 'terminal', component: 'AbovePrompt', props: { ...PROPS, bodyColumns } })
+    expect(await ui.find({ key: 'cache' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /hit 95%/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /cr 95k/ })).toBeDefined()
+    await ui.unmount()
+  }
+})
+
+test('without a response yet no cache group is drawn', async ($, on) => {
+  mock.clock(on, { now: NOW })
+  on('session.model', () => ({ value: 'claude-sonnet-5-5' }))
+  on('session.cwd', () => ({ value: '/home/u/proj' }))
+  on('session.usage', () => ({ value: { startedAt: 0, context: { window: 200000 }, rateLimits: [] } }))
+
+  const ui = await $.ui.mount({ plugin: 'usage-hud', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
+  expect(await ui.find({ key: 'cache' })).toBeUndefined()
+  await ui.unmount()
+})

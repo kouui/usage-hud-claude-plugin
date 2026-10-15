@@ -3,7 +3,7 @@
 A Claude Code mod that draws a small band above the prompt, as a replacement for a status-line HUD. It has no runtime dependency (no Node package, no Python, no shell script) and runs the same on Windows and Linux.
 
 ```text
-[Sonnet 5.5] │ game-dev-skills  git:(main) │ ▌Context 31% (msg 48k/400k) │ ▌Usage 0% (4h 36m) │ ▌Weekly 91% (1d 20h)
+[Sonnet 5.5] │ game-dev-skills  git:(main) │ ▌Context 31% (msg 48k/400k) │ ▌Usage 0% (4h 36m) │ ▌Weekly 91% (1d 20h) │ in 1.0k  cr 95k  cw 4.0k  hit 95%  out 800
 ```
 
 ## What it shows
@@ -15,6 +15,7 @@ A Claude Code mod that draws a small band above the prompt, as a replacement for
 | Git branch | `git rev-parse --abbrev-ref HEAD` in the session directory, read at most every 15 s |
 | Context bar | `$.session.usage({ breakdown: 'summary' }).context`; the label, percent and `(msg <message tokens>/<window>)` are written inside the bar (green below 70%, yellow below 90%, red from 90%). The percent is input tokens over the compaction window (`autoCompactWindow`), not the model's longest context |
 | Plan windows | `$.session.usage().rateLimits`: `five_hour` as Usage, `seven_day` as Weekly, each a bar with the time to reset inside it, after the percent (`Usage 1% (3h 26m)`) |
+| Cache | `breakdown.apiUsage` of `$.session.usage({ breakdown: 'summary' })`, the last API response: `in` uncached input, `cr` cache read, `cw` cache write, `hit` = read / (in + read + write) (green from 80%, yellow from 50%, red below), `out` output. Drawn at the right end; hidden before the first response |
 
 The band redraws when the usage figures change and once a minute, so countdowns keep moving.
 

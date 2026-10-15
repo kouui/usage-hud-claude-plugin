@@ -52,6 +52,24 @@ export function tokenLabel(n: number): string {
   return `${Math.round(m * 10) / 10}M`
 }
 
+/**
+ * The prompt-cache figures of one API response. `hit` is the share of the prompt the cache served:
+ * read / (uncached input + read + written), as a whole percent; undefined when the prompt had no tokens.
+ */
+export function cacheStats(u: {
+  input_tokens?: number
+  output_tokens?: number
+  cache_read_input_tokens?: number
+  cache_creation_input_tokens?: number
+}): { input: number; read: number; write: number; output: number; hit: number | undefined } {
+  const n = (v: unknown) => Math.max(0, Number(v) || 0)
+  const input = n(u.input_tokens)
+  const read = n(u.cache_read_input_tokens)
+  const write = n(u.cache_creation_input_tokens)
+  const total = input + read + write
+  return { input, read, write, output: n(u.output_tokens), hit: total > 0 ? Math.round((read / total) * 100) : undefined }
+}
+
 /** Label for a rate-limit window kind. */
 export function windowLabel(kind: string): string {
   if (kind === 'five_hour') return 'Usage'

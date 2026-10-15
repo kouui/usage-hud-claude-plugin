@@ -1,6 +1,6 @@
 import { test, expect } from 'claude-code/testing'
 
-import { bar, baseName, countdown, displayWidth, labelBar, levelColor, modelLabel, rowWidth, tokenLabel, windowLabel } from '../hooks/format'
+import { bar, baseName, cacheStats, countdown, displayWidth, labelBar, levelColor, modelLabel, rowWidth, tokenLabel, windowLabel } from '../hooks/format'
 
 test('bar fills in proportion and clamps', async () => {
   expect(bar(0)).toBe('░░░░░░░░░░')
@@ -93,4 +93,11 @@ test('tokenLabel shortens counts', async () => {
   expect(tokenLabel(48_300)).toBe('48k')
   expect(tokenLabel(400_000)).toBe('400k')
   expect(tokenLabel(1_000_000)).toBe('1M')
+})
+
+test('cacheStats gives the hit rate over all prompt tokens', async () => {
+  const c = cacheStats({ input_tokens: 1000, output_tokens: 800, cache_read_input_tokens: 95000, cache_creation_input_tokens: 4000 })
+  expect(c).toEqual({ input: 1000, read: 95000, write: 4000, output: 800, hit: 95 })
+  expect(cacheStats({}).hit).toBeUndefined()
+  expect(cacheStats({ input_tokens: 10 }).hit).toBe(0)
 })
