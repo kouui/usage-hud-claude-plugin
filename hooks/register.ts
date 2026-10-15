@@ -1,6 +1,6 @@
 import type { Register } from 'claude-code'
 
-import { baseName, countdown, labelBar, levelColor, modelLabel, rowWidth, windowLabel } from './format'
+import { baseName, countdown, labelBar, levelColor, modelLabel, rowWidth, tokenLabel, windowLabel } from './format'
 
 const REFRESH_MS = 60_000 // countdowns move without any event, so redraw once a minute
 const GIT_TTL_MS = 15_000
@@ -57,7 +57,16 @@ export const register: Register = (on) => {
     if (e.props.hasSurvey) return next(e)
 
     const { Box, Text } = $.ui.resolve(e)
-    const [usage, model, cwd, now] = await Promise.all([$.session.usage(), $.session.model(), $.session.cwd(), $.clock.now()])
+    // `breakdown: 'summary'` is a local estimate (no request) and carries the compaction window.
+    // Without a bound session it can fail; then the plain figures are used.
+    const readUsage = async () => {
+      try {
+        return await $.session.usage({ breakdown: 'summary' })
+      } catch {
+        return await $.session.usage()
+      }
+    }
+    const [usage, model, cwd, now] = await Promise.all([readUsage(), $.session.model(), $.session.cwd(), $.clock.now()])
     if (cwd !== git.cwd || now - git.at > GIT_TTL_MS) void refreshBranch($, cwd)
 
     const piece = (text: string, props: Record<string, unknown> = {}): Piece => ({ text, props })
@@ -87,9 +96,16 @@ export const register: Register = (on) => {
       if (git.branch) head.push(piece(`git:(${git.branch})`, { dimColor: true }))
 
       // Group 2: Context, then each reported rate-limit window.
+      // The percent is measured against the compaction window (autoCompactWindow), not the model's
+      // longest context; the breakdown holds that window. Without it the engine's own percent is used.
       const ctx = usage.context
-      const hasContext = ctx.percent !== undefined && ctx.tokens !== undefined
-      const meters: Piece[] = [meter('context', 'Context', hasContext ? ctx.percent : undefined, width)]
+      const windowTokens = ctx.breakdown?.rawMaxTokens ?? ctx.window
+      const hasContext = ctx.tokens !== undefined && (windowTokens > 0 || ctx.percent !== undefined)
+      const ctxPercent = hasContext ? (windowTokens > 0 ? Math.round(((ctx.tokens as number) / windowTokens) * 100) : ctx.percent) : undefined
+      // Tokens of the messages alone, out of the window: ` Context 31% (msg 48k/400k) `.
+      const msgTokens = ctx.breakdown?.categories.find((c) => c.name === 'Messages')?.tokens
+      const ctxSuffix = hasContext && msgTokens !== undefined && windowTokens > 0 ? `(msg ${tokenLabel(msgTokens)}/${tokenLabel(windowTokens)})` : ''
+      const meters: Piece[] = [meter('context', 'Context', ctxPercent, width, ctxSuffix)]
       for (const r of usage.rateLimits) {
         // The time to reset sits inside the bar, after the percent: ` Usage 1% (3h 26m) `.
         const left = countdown(r.resetsAt, now)

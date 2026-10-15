@@ -1,6 +1,6 @@
 import { test, expect } from 'claude-code/testing'
 
-import { bar, baseName, countdown, displayWidth, labelBar, levelColor, modelLabel, rowWidth, windowLabel } from '../hooks/format'
+import { bar, baseName, countdown, displayWidth, labelBar, levelColor, modelLabel, rowWidth, tokenLabel, windowLabel } from '../hooks/format'
 
 test('bar fills in proportion and clamps', async () => {
   expect(bar(0)).toBe('░░░░░░░░░░')
@@ -85,4 +85,12 @@ test('labelBar puts the reset time inside the bar after the percent', async () =
   // the suffix widens the bar past `width` rather than being cut
   expect(labelBar('Weekly', 91, 15, '(1d 20h)').text).toBe(' Weekly 91% (1d 20h) ')
   expect(labelBar('Weekly', 91, 30, '(1d 20h)').text.length).toBe(30)
+})
+
+test('tokenLabel shortens counts', async () => {
+  expect(tokenLabel(950)).toBe('950')
+  expect(tokenLabel(1200)).toBe('1.2k')
+  expect(tokenLabel(48_300)).toBe('48k')
+  expect(tokenLabel(400_000)).toBe('400k')
+  expect(tokenLabel(1_000_000)).toBe('1M')
 })

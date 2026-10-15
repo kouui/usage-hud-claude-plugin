@@ -40,6 +40,18 @@ export function countdown(resetsAt: string | undefined, nowMs: number): string {
   return `${m}m`
 }
 
+/** A token count in short form: `950`, `48k`, `1.2k`, `1M`. */
+export function tokenLabel(n: number): string {
+  const v = Math.max(0, Math.round(Number(n) || 0))
+  if (v < 1000) return String(v)
+  if (v < 1_000_000) {
+    const k = v / 1000
+    return `${k < 10 ? Math.round(k * 10) / 10 : Math.round(k)}k`
+  }
+  const m = v / 1_000_000
+  return `${Math.round(m * 10) / 10}M`
+}
+
 /** Label for a rate-limit window kind. */
 export function windowLabel(kind: string): string {
   if (kind === 'five_hour') return 'Usage'

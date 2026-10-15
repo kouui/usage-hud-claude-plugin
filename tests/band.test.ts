@@ -65,3 +65,27 @@ test('a narrow band still draws every item', async ($, on) => {
     await ui.unmount()
   }
 })
+
+test('the context percent is measured against the compaction window and the bar shows message tokens', async ($, on) => {
+  mock.clock(on, { now: NOW })
+  on('session.model', () => ({ value: 'claude-sonnet-5-5' }))
+  on('session.cwd', () => ({ value: '/home/u/proj' }))
+  on('session.usage', () => ({
+    value: {
+      startedAt: 0,
+      // 100000 tokens of a 1M model window is 10%, but of a 400000 compaction window it is 25%
+      context: {
+        tokens: 100000,
+        window: 1000000,
+        percent: 10,
+        breakdown: { rawMaxTokens: 400000, categories: [{ name: 'Messages', kind: 'used', tokens: 48000 }] },
+      },
+      rateLimits: [],
+    },
+  }))
+
+  const ui = await $.ui.mount({ plugin: 'usage-hud', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
+  expect(await ui.find({ type: 'Text', text: /25%/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /\(msg 48k\/400k\)/ })).toBeDefined()
+  await ui.unmount()
+})
