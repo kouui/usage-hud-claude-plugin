@@ -1,6 +1,6 @@
 import { test, expect } from 'claude-code/testing'
 
-import { bar, baseName, countdown, displayWidth, levelColor, modelLabel, rowWidth, windowLabel } from '../hooks/format'
+import { bar, baseName, countdown, displayWidth, labelBar, levelColor, modelLabel, rowWidth, windowLabel } from '../hooks/format'
 
 test('bar fills in proportion and clamps', async () => {
   expect(bar(0)).toBe('░░░░░░░░░░')
@@ -62,4 +62,18 @@ test('rowWidth adds the gaps between pieces', async () => {
   expect(rowWidth(['ab'])).toBe(2)
   expect(rowWidth(['ab', 'cde', '整'], 1)).toBe(2 + 3 + 2 + 2)
   expect(rowWidth(['ab', 'cd'], 3)).toBe(2 + 2 + 3)
+})
+
+test('labelBar writes the label and percent inside the bar and cuts at the used part', async () => {
+  const b = labelBar('Context', 50, 20)
+  expect(b.text).toBe(' Context 50%        ')
+  expect(b.text.length).toBe(20)
+  expect(b.filled).toBe(' Context 5')
+  expect(b.filled + b.empty).toBe(b.text)
+
+  expect(labelBar('Usage', 0, 16).filled).toBe('')
+  expect(labelBar('Usage', 100, 16).empty).toBe('')
+  expect(labelBar('Weekly', 91, 15).text).toBe(' Weekly 91%    ')
+  // a label longer than the width is kept whole
+  expect(labelBar('A very long label', 10, 8).text).toBe(' A very long label 10%')
 })

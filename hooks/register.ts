@@ -1,15 +1,17 @@
 import type { Register } from 'claude-code'
 
-import { bar, baseName, countdown, levelColor, modelLabel, rowWidth, windowLabel } from './format'
+import { baseName, countdown, labelBar, levelColor, modelLabel, rowWidth, windowLabel } from './format'
 
 const REFRESH_MS = 60_000 // countdowns move without any event, so redraw once a minute
 const GIT_TTL_MS = 15_000
-const BAR_WIDTH = 10
-const COMPACT_BAR = 6 // bar cells when everything has to fit on one row
+const BAR_WIDTH = 20 // cells of a bar, label included
+const COMPACT_BAR = 15 // cells of a bar when everything has to fit on one row
 const GAP = 1 // cells between pieces in a row
 const SPARE = 2 // cells left free at the right end so a row never wraps by one
 
-type Piece = { text: string; props: Record<string, unknown> }
+// A piece is one run of text, or a bar: several runs drawn side by side with no gap.
+type Run = { text: string; props: Record<string, unknown> }
+type Piece = { text: string; props: Record<string, unknown>; runs?: Run[]; key?: string }
 
 // Module variables reset on a hot reload; they only hold what is cheap to read again.
 const git = { branch: '', cwd: '', at: 0, isTicking: false }
@@ -61,28 +63,37 @@ export const register: Register = (on) => {
     const piece = (text: string, props: Record<string, unknown> = {}): Piece => ({ text, props })
     const sep = () => piece('│', { dimColor: true })
 
-    // The pieces in two groups. `isCompact` shortens the bars and the reset text so one row can fit.
+    // A bar with its label inside: the used part on the level color, the rest on a dim one.
+    // No figure yet (undefined) draws the whole bar dim with `--` in place of the percent.
+    const meter = (key: string, label: string, percent: number | undefined, width: number): Piece => {
+      const dim = { color: 'white', backgroundColor: 'blackBright' }
+      if (percent === undefined) {
+        const t = ` ${label} --`.padEnd(width, ' ')
+        return { text: t, props: {}, key, runs: [{ text: t, props: dim }] }
+      }
+      const t = labelBar(label, percent, width)
+      const runs: Run[] = []
+      if (t.filled) runs.push({ text: t.filled, props: { color: 'black', backgroundColor: levelColor(percent) } })
+      if (t.empty) runs.push({ text: t.empty, props: dim })
+      return { text: t.text, props: {}, key, runs }
+    }
+
+    // The pieces in two groups. `isCompact` shortens the bars so one row can fit.
     const build = (isCompact: boolean) => {
-      const barWidth = isCompact ? COMPACT_BAR : BAR_WIDTH
-      const meterBar = (percent: number) => piece(bar(percent, barWidth), { color: levelColor(percent) })
+      const width = isCompact ? COMPACT_BAR : BAR_WIDTH
 
       // Group 1: [model] │ directory  git:(branch)
       const head: Piece[] = [piece(`[${modelLabel(model)}]`, { color: 'cyan' }), sep(), piece(baseName(cwd), { color: 'yellow' })]
       if (git.branch) head.push(piece(`git:(${git.branch})`, { dimColor: true }))
 
-      // Group 2: Context, then each reported rate-limit window, then cost.
+      // Group 2: Context, then each reported rate-limit window.
       const ctx = usage.context
-      const meters: Piece[] = []
-      if (ctx.percent === undefined || ctx.tokens === undefined) {
-        meters.push(piece('Context  --', { dimColor: true }))
-      } else {
-        meters.push(piece('Context', { dimColor: true }), meterBar(ctx.percent), piece(`${ctx.percent}%`, { color: levelColor(ctx.percent) }))
-      }
+      const hasContext = ctx.percent !== undefined && ctx.tokens !== undefined
+      const meters: Piece[] = [meter('context', 'Context', hasContext ? ctx.percent : undefined, width)]
       for (const r of usage.rateLimits) {
-        meters.push(sep(), piece(windowLabel(r.kind), { dimColor: true }), meterBar(r.percentUsed))
-        meters.push(piece(`${r.percentUsed}%`, { color: levelColor(r.percentUsed) }))
+        meters.push(sep(), meter(`window-${r.kind}`, windowLabel(r.kind), r.percentUsed, width))
         const left = countdown(r.resetsAt, now)
-        if (left) meters.push(piece(isCompact ? `(${left})` : `(resets in ${left})`, { dimColor: true }))
+        if (left) meters.push(piece(`(${left})`, { dimColor: true }))
       }
       // Cost is not shown. To bring it back: if (usage.cost) meters.push(sep(), piece(`$${usage.cost.usd.toFixed(2)}`, { dimColor: true }))
       return { head, meters }
@@ -97,19 +108,14 @@ export const register: Register = (on) => {
     const compactRow = [...compact.head, sep(), ...compact.meters]
     const rows: Piece[][] = fits(fullRow) ? [fullRow] : fits(compactRow) ? [compactRow] : [full.head, full.meters]
 
-    const draw = (pieces: Piece[]) =>
-      Box({
-        flexDirection: 'row',
-        columnGap: GAP,
-        flexWrap: 'wrap',
-        children: pieces.map((p) => Text({ ...p.props, children: [p.text] })),
-      })
+    const drawPiece = (p: Piece) =>
+      p.runs
+        ? Box({ key: p.key, flexDirection: 'row', children: p.runs.map((r) => Text({ ...r.props, children: [r.text] })) })
+        : Text({ ...p.props, children: [p.text] })
+
+    const draw = (pieces: Piece[]) => Box({ flexDirection: 'row', columnGap: GAP, flexWrap: 'wrap', children: pieces.map(drawPiece) })
 
     // marginTop keeps the band off the last line of the conversation above it.
-    return Box({
-      flexDirection: 'column',
-      marginTop: 1,
-      children: rows.map(draw),
-    })
+    return Box({ flexDirection: 'column', marginTop: 1, children: rows.map(draw) })
   })
 }

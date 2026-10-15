@@ -48,6 +48,18 @@ export function windowLabel(kind: string): string {
   return kind
 }
 
+/**
+ * A bar with its label written inside: ` Context 31%` padded to `width` cells and cut at the
+ * filled part, so the first piece is drawn on the "used" color and the second on the "free" one.
+ */
+export function labelBar(label: string, percent: number, width: number): { filled: string; empty: string; text: string } {
+  const p = Math.max(0, Math.min(100, Number(percent) || 0))
+  const body = ` ${label} ${p}%`
+  const text = body.length >= width ? body : body.padEnd(width, ' ')
+  const n = Math.round((p / 100) * text.length)
+  return { filled: text.slice(0, n), empty: text.slice(n), text }
+}
+
 /** Terminal cells a string takes: East Asian wide characters count as two. */
 export function displayWidth(s: string): number {
   let w = 0

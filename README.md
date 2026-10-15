@@ -4,7 +4,7 @@ A Claude Code mod that draws a small band above the prompt, as a replacement for
 
 ```text
 [Sonnet 5.5] │ game-dev-skills  git:(main)
-Context ███░░░░░░░ 31% │ Usage ░░░░░░░░░░ 0% (resets in 4h 36m) │ Weekly █████████░ 91% (resets in 1d 20h)
+[Sonnet 5.5] │ game-dev-skills  git:(main) │ ▌Context 31%      │ ▌Usage 0%      (4h 36m) │ ▌Weekly 91%     (1d 20h)
 ```
 
 ## What it shows
@@ -14,12 +14,12 @@ Context ███░░░░░░░ 31% │ Usage ░░░░░░░░░
 | Model | `$.session.model()`, turned into `Sonnet 5.5` |
 | Directory | last segment of `$.session.cwd()` |
 | Git branch | `git rev-parse --abbrev-ref HEAD` in the session directory, read at most every 15 s |
-| Context bar | `$.session.usage().context` (green below 70%, yellow below 90%, red from 90%) |
-| Plan windows | `$.session.usage().rateLimits`: `five_hour` as Usage, `seven_day` as Weekly, with a reset countdown |
+| Context bar | `$.session.usage().context`; the label and percent are written inside the bar (green below 70%, yellow below 90%, red from 90%) |
+| Plan windows | `$.session.usage().rateLimits`: `five_hour` as Usage, `seven_day` as Weekly, each a bar with the time to reset after it |
 
 The band redraws when the usage figures change and once a minute, so countdowns keep moving.
 
-Layout: one row when everything fits the width the band has; otherwise one row with shorter bars and `(4h 24m)` for the reset text; otherwise two rows.
+Layout: one row of 20-cell bars when it fits the width the band has; otherwise one row of 15-cell bars; otherwise two rows. Cost is not shown.
 
 ## Install
 

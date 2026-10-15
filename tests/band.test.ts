@@ -1,9 +1,9 @@
 import { test, expect, mock } from 'claude-code/testing'
 
-const PROPS = { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 100 }
+const PROPS = { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 200 }
 const NOW = Date.parse('2026-10-15T00:00:00Z')
 
-test('the band shows model, context and both plan windows', async ($, on) => {
+test('the band shows model, directory, bars with their labels and reset countdowns', async ($, on) => {
   mock.clock(on, { now: NOW })
   on('session.model', () => ({ value: 'claude-sonnet-5-5' }))
   on('session.cwd', () => ({ value: 'D:\\share\\src\\game-dev-skills' }))
@@ -23,23 +23,26 @@ test('the band shows model, context and both plan windows', async ($, on) => {
     const ui = await $.ui.mount({ plugin: 'usage-hud', surface, component: 'AbovePrompt', props: PROPS })
     expect(await ui.find({ type: 'Text', text: /Sonnet 5\.5/ })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /game-dev-skills/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /31%/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /91%/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /Weekly/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /resets in 4h 36m/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /resets in 1d 20h/ })).toBeDefined()
+    expect(await ui.find({ key: 'context' })).toBeDefined()
+    expect(await ui.find({ key: 'window-five_hour' })).toBeDefined()
+    expect(await ui.find({ key: 'window-seven_day' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /\(4h 36m\)/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /\(1d 20h\)/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /\$1\.50/ })).toBeUndefined()
+    expect(await ui.find({ type: 'Text', text: /resets in/ })).toBeUndefined()
     await ui.unmount()
   }
 })
 
-test('before the first response the context shows no figure', async ($, on) => {
+test('before the first response the context bar has no figure', async ($, on) => {
   mock.clock(on, { now: NOW })
   on('session.model', () => ({ value: 'claude-sonnet-5-5' }))
   on('session.cwd', () => ({ value: '/home/u/proj' }))
   on('session.usage', () => ({ value: { startedAt: 0, context: { window: 200000 }, rateLimits: [] } }))
 
   const ui = await $.ui.mount({ plugin: 'usage-hud', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
-  expect(await ui.find({ type: 'Text', text: /Context\s+--/ })).toBeDefined()
+  expect(await ui.find({ key: 'context' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /Context --/ })).toBeDefined()
   await ui.unmount()
 })
 
@@ -58,8 +61,8 @@ test('a narrow band still draws every item', async ($, on) => {
   for (const bodyColumns of [40, 300]) {
     const ui = await $.ui.mount({ plugin: 'usage-hud', surface: 'terminal', component: 'AbovePrompt', props: { ...PROPS, bodyColumns } })
     expect(await ui.find({ type: 'Text', text: /Sonnet 5\.5/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /Context/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /Usage/ })).toBeDefined()
+    expect(await ui.find({ key: 'context' })).toBeDefined()
+    expect(await ui.find({ key: 'window-five_hour' })).toBeDefined()
     await ui.unmount()
   }
 })
