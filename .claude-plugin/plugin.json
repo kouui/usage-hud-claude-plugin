@@ -1,6 +1,6 @@
 {
   "name": "usage-hud",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A band above the prompt showing model, directory, git branch, context fill and plan-window usage with reset countdowns.",
   "author": { "name": "kouui" },
   "homepage": "https://github.com/kouui/usage-hud-claude-plugin",

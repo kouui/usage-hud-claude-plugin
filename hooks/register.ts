@@ -86,6 +86,7 @@ export const register: Register = (on) => {
     }
 
     const row = (children: unknown[]) => Box({ flexDirection: 'row', columnGap: 1, flexWrap: 'wrap', children })
-    return Box({ flexDirection: 'column', children: [row(head), row(meters)] })
+    // marginTop keeps the band off the last line of the conversation above it.
+    return Box({ flexDirection: 'column', marginTop: 1, children: [row(head), row(meters)] })
   })
 }
