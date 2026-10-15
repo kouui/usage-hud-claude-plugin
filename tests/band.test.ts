@@ -42,3 +42,24 @@ test('before the first response the context shows no figure', async ($, on) => {
   expect(await ui.find({ type: 'Text', text: /Context\s+--/ })).toBeDefined()
   await ui.unmount()
 })
+
+test('a narrow band still draws every item', async ($, on) => {
+  mock.clock(on, { now: NOW })
+  on('session.model', () => ({ value: 'claude-sonnet-5-5' }))
+  on('session.cwd', () => ({ value: '/home/u/proj' }))
+  on('session.usage', () => ({
+    value: {
+      startedAt: 0,
+      context: { tokens: 1000, window: 200000, percent: 1 },
+      rateLimits: [{ kind: 'five_hour', percentUsed: 5, resetsAt: '2026-10-15T01:00:00Z' }],
+    },
+  }))
+
+  for (const bodyColumns of [40, 300]) {
+    const ui = await $.ui.mount({ plugin: 'usage-hud', surface: 'terminal', component: 'AbovePrompt', props: { ...PROPS, bodyColumns } })
+    expect(await ui.find({ type: 'Text', text: /Sonnet 5\.5/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /Context/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /Usage/ })).toBeDefined()
+    await ui.unmount()
+  }
+})

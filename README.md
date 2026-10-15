@@ -20,6 +20,8 @@ Context ███░░░░░░░ 31% │ Usage ░░░░░░░░░
 
 The band redraws when the usage figures change and once a minute, so countdowns keep moving.
 
+Layout: one row when everything fits the width the band has; otherwise one row with shorter bars and `(4h 24m)` for the reset text; otherwise two rows.
+
 ## Install
 
 This repo is a single plugin. It is listed in the [magic-claude-code-plugin](https://github.com/kouui/magic-claude-code-plugin) marketplace:

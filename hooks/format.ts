@@ -48,6 +48,31 @@ export function windowLabel(kind: string): string {
   return kind
 }
 
+/** Terminal cells a string takes: East Asian wide characters count as two. */
+export function displayWidth(s: string): number {
+  let w = 0
+  for (const ch of s) {
+    const c = ch.codePointAt(0) ?? 0
+    const isWide =
+      (c >= 0x1100 && c <= 0x115f) ||
+      (c >= 0x2e80 && c <= 0xa4cf) ||
+      (c >= 0xac00 && c <= 0xd7a3) ||
+      (c >= 0xf900 && c <= 0xfaff) ||
+      (c >= 0xfe30 && c <= 0xfe6f) ||
+      (c >= 0xff00 && c <= 0xff60) ||
+      (c >= 0xffe0 && c <= 0xffe6) ||
+      (c >= 0x20000 && c <= 0x3fffd)
+    w += isWide ? 2 : 1
+  }
+  return w
+}
+
+/** Cells a row of pieces takes when drawn with `gap` cells between them. */
+export function rowWidth(texts: readonly string[], gap = 1): number {
+  if (texts.length === 0) return 0
+  return texts.reduce((sum, t) => sum + displayWidth(t), 0) + gap * (texts.length - 1)
+}
+
 /** Last path segment, for Windows and POSIX paths alike. */
 export function baseName(path: string): string {
   const parts = path.replace(/[\\/]+$/, '').split(/[\\/]/)

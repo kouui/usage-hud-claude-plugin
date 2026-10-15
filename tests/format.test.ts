@@ -1,6 +1,6 @@
 import { test, expect } from 'claude-code/testing'
 
-import { bar, baseName, countdown, levelColor, modelLabel, windowLabel } from '../hooks/format'
+import { bar, baseName, countdown, displayWidth, levelColor, modelLabel, rowWidth, windowLabel } from '../hooks/format'
 
 test('bar fills in proportion and clamps', async () => {
   expect(bar(0)).toBe('░░░░░░░░░░')
@@ -48,4 +48,18 @@ test('baseName takes the last segment of a Windows or POSIX path', async () => {
   expect(baseName('D:\\share\\src\\game-dev-skills\\')).toBe('game-dev-skills')
   expect(baseName('/home/u/proj/')).toBe('proj')
   expect(baseName('/home/u/proj')).toBe('proj')
+})
+
+test('displayWidth counts wide characters as two cells', async () => {
+  expect(displayWidth('abc')).toBe(3)
+  expect(displayWidth('整理skill')).toBe(9)
+  expect(displayWidth('│')).toBe(1)
+  expect(displayWidth('')).toBe(0)
+})
+
+test('rowWidth adds the gaps between pieces', async () => {
+  expect(rowWidth([])).toBe(0)
+  expect(rowWidth(['ab'])).toBe(2)
+  expect(rowWidth(['ab', 'cde', '整'], 1)).toBe(2 + 3 + 2 + 2)
+  expect(rowWidth(['ab', 'cd'], 3)).toBe(2 + 2 + 3)
 })
