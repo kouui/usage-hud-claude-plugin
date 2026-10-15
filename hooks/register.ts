@@ -65,13 +65,13 @@ export const register: Register = (on) => {
 
     // A bar with its label inside: the used part on the level color, the rest on a dim one.
     // No figure yet (undefined) draws the whole bar dim with `--` in place of the percent.
-    const meter = (key: string, label: string, percent: number | undefined, width: number): Piece => {
+    const meter = (key: string, label: string, percent: number | undefined, width: number, suffix = ''): Piece => {
       const dim = { color: 'white', backgroundColor: 'blackBright' }
       if (percent === undefined) {
-        const t = ` ${label} --`.padEnd(width, ' ')
+        const t = ` ${label} -- `.padEnd(width, ' ')
         return { text: t, props: {}, key, runs: [{ text: t, props: dim }] }
       }
-      const t = labelBar(label, percent, width)
+      const t = labelBar(label, percent, width, suffix)
       const runs: Run[] = []
       if (t.filled) runs.push({ text: t.filled, props: { color: 'black', backgroundColor: levelColor(percent) } })
       if (t.empty) runs.push({ text: t.empty, props: dim })
@@ -91,9 +91,9 @@ export const register: Register = (on) => {
       const hasContext = ctx.percent !== undefined && ctx.tokens !== undefined
       const meters: Piece[] = [meter('context', 'Context', hasContext ? ctx.percent : undefined, width)]
       for (const r of usage.rateLimits) {
-        meters.push(sep(), meter(`window-${r.kind}`, windowLabel(r.kind), r.percentUsed, width))
+        // The time to reset sits inside the bar, after the percent: ` Usage 1% (3h 26m) `.
         const left = countdown(r.resetsAt, now)
-        if (left) meters.push(piece(`(${left})`, { dimColor: true }))
+        meters.push(sep(), meter(`window-${r.kind}`, windowLabel(r.kind), r.percentUsed, width, left ? `(${left})` : ''))
       }
       // Cost is not shown. To bring it back: if (usage.cost) meters.push(sep(), piece(`$${usage.cost.usd.toFixed(2)}`, { dimColor: true }))
       return { head, meters }

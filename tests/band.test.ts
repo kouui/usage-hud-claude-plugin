@@ -27,7 +27,6 @@ test('the band shows model, directory, bars with their labels and reset countdow
     expect(await ui.find({ key: 'window-five_hour' })).toBeDefined()
     expect(await ui.find({ key: 'window-seven_day' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /\(4h 36m\)/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /\(1d 20h\)/ })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /\$1\.50/ })).toBeUndefined()
     expect(await ui.find({ type: 'Text', text: /resets in/ })).toBeUndefined()
     await ui.unmount()

@@ -75,5 +75,14 @@ test('labelBar writes the label and percent inside the bar and cuts at the used 
   expect(labelBar('Usage', 100, 16).empty).toBe('')
   expect(labelBar('Weekly', 91, 15).text).toBe(' Weekly 91%    ')
   // a label longer than the width is kept whole
-  expect(labelBar('A very long label', 10, 8).text).toBe(' A very long label 10%')
+  expect(labelBar('A very long label', 10, 8).text).toBe(' A very long label 10% ')
+})
+
+test('labelBar puts the reset time inside the bar after the percent', async () => {
+  const b = labelBar('Usage', 1, 18, '(3h 26m)')
+  expect(b.text).toBe(' Usage 1% (3h 26m) ')
+  expect(b.filled + b.empty).toBe(b.text)
+  // the suffix widens the bar past `width` rather than being cut
+  expect(labelBar('Weekly', 91, 15, '(1d 20h)').text).toBe(' Weekly 91% (1d 20h) ')
+  expect(labelBar('Weekly', 91, 30, '(1d 20h)').text.length).toBe(30)
 })

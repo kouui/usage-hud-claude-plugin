@@ -3,7 +3,7 @@
 A Claude Code mod that draws a small band above the prompt, as a replacement for a status-line HUD. It has no runtime dependency (no Node package, no Python, no shell script) and runs the same on Windows and Linux.
 
 ```text
-[Sonnet 5.5] │ game-dev-skills  git:(main) │ ▌Context 31%      │ ▌Usage 0%      (4h 36m) │ ▌Weekly 91%     (1d 20h)
+[Sonnet 5.5] │ game-dev-skills  git:(main) │ ▌Context 31% │ ▌Usage 0% (4h 36m) │ ▌Weekly 91% (1d 20h)
 ```
 
 ## What it shows
@@ -14,7 +14,7 @@ A Claude Code mod that draws a small band above the prompt, as a replacement for
 | Directory | last segment of `$.session.cwd()` |
 | Git branch | `git rev-parse --abbrev-ref HEAD` in the session directory, read at most every 15 s |
 | Context bar | `$.session.usage().context`; the label and percent are written inside the bar (green below 70%, yellow below 90%, red from 90%) |
-| Plan windows | `$.session.usage().rateLimits`: `five_hour` as Usage, `seven_day` as Weekly, each a bar with the time to reset after it |
+| Plan windows | `$.session.usage().rateLimits`: `five_hour` as Usage, `seven_day` as Weekly, each a bar with the time to reset inside it, after the percent (`Usage 1% (3h 26m)`) |
 
 The band redraws when the usage figures change and once a minute, so countdowns keep moving.
 
