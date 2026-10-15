@@ -4,7 +4,7 @@ A Claude Code mod that draws a small band above the prompt, as a replacement for
 
 ```text
 [Sonnet 5.5] │ game-dev-skills  git:(main)
-Context ███░░░░░░░ 31% │ Usage ░░░░░░░░░░ 0% (resets in 4h 36m) │ Weekly █████████░ 91% (resets in 1d 20h) │ $1.50
+Context ███░░░░░░░ 31% │ Usage ░░░░░░░░░░ 0% (resets in 4h 36m) │ Weekly █████████░ 91% (resets in 1d 20h)
 ```
 
 ## What it shows
@@ -16,7 +16,6 @@ Context ███░░░░░░░ 31% │ Usage ░░░░░░░░░
 | Git branch | `git rev-parse --abbrev-ref HEAD` in the session directory, read at most every 15 s |
 | Context bar | `$.session.usage().context` (green below 70%, yellow below 90%, red from 90%) |
 | Plan windows | `$.session.usage().rateLimits`: `five_hour` as Usage, `seven_day` as Weekly, with a reset countdown |
-| Cost | `$.session.usage().cost`, when the host reports it |
 
 The band redraws when the usage figures change and once a minute, so countdowns keep moving.
 

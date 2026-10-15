@@ -84,7 +84,7 @@ export const register: Register = (on) => {
         const left = countdown(r.resetsAt, now)
         if (left) meters.push(piece(isCompact ? `(${left})` : `(resets in ${left})`, { dimColor: true }))
       }
-      if (usage.cost) meters.push(sep(), piece(`$${usage.cost.usd.toFixed(2)}`, { dimColor: true }))
+      // Cost is not shown. To bring it back: if (usage.cost) meters.push(sep(), piece(`$${usage.cost.usd.toFixed(2)}`, { dimColor: true }))
       return { head, meters }
     }
 
