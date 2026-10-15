@@ -3,7 +3,6 @@
 A Claude Code mod that draws a small band above the prompt, as a replacement for a status-line HUD. It has no runtime dependency (no Node package, no Python, no shell script) and runs the same on Windows and Linux.
 
 ```text
-[Sonnet 5.5] │ game-dev-skills  git:(main)
 [Sonnet 5.5] │ game-dev-skills  git:(main) │ ▌Context 31%      │ ▌Usage 0%      (4h 36m) │ ▌Weekly 91%     (1d 20h)
 ```
 
